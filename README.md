@@ -1,302 +1,244 @@
 # JAY-wallet
 
-Aplicación web para **prestamistas**: registra a quién le prestaste, cuánto, con qué interés, para cuándo vence y cuánto te han abonado, todo en un solo lugar.
+Aplicación web para prestamistas. Sirve para llevar el registro de a quién se le prestó dinero, cuánto, con qué interés, para cuándo vence y cuánto se ha abonado, sin depender de la memoria ni de notas sueltas.
 
-> Proyecto Integrador I · Ingeniería de Sistemas · Universidad del Valle. Construido en equipo (3 personas).
+Proyecto Integrador I · Ingeniería de Sistemas · Universidad del Valle. Lo desarrollamos entre tres personas.
 
----
+## Estado actual
 
-## Tabla de contenido
+El registro e inicio de sesión ya funcionan de punta a punta: un usuario puede crear su cuenta, entrar, ver el dashboard y cerrar sesión, y el backend rechaza las peticiones sin token válido. Lo que sigue es el CRUD de deudores, que es la base de todo lo demás (préstamos, abonos y estadísticas cuelgan de ahí).
 
-1. [Descripción](#descripción)
-2. [Funcionalidades](#funcionalidades)
-3. [Stack tecnológico](#stack-tecnológico)
-4. [Arquitectura](#arquitectura)
-5. [Estructura del proyecto](#estructura-del-proyecto)
-6. [Cómo empezar](#cómo-empezar)
-7. [Variables de entorno](#variables-de-entorno)
-8. [Base de datos](#base-de-datos)
-9. [API (planificada)](#api-planificada)
-10. [Flujo de trabajo en Git](#flujo-de-trabajo-en-git)
-11. [Seguridad](#seguridad)
-12. [Estado del proyecto](#estado-del-proyecto)
-13. [Equipo](#equipo)
+El detalle por sprint está al final, en la sección [Avance](#avance).
 
----
+## Qué es y para quién
 
-## Descripción
+Hay un solo tipo de usuario: el prestamista, una persona natural que presta dinero de forma habitual o de vez en cuando. Los deudores no usan la aplicación; son datos que el prestamista registra.
 
-**El problema:** quien presta dinero suele llevar el control en la memoria, en notas sueltas o en chats, y con el tiempo se pierden datos: a quién se prestó, cuánto, cuándo vence y cuánto se ha pagado.
+La app responde dos necesidades:
 
-**La solución:** JAY-wallet centraliza esa información para poder consultarla en cualquier momento y cobrar a tiempo.
+1. Saber quién debe, cuánto debe y cómo contactarlo para cobrar a tiempo.
+2. Tener esa información a mano y ver cuánto capital hay prestado y cuánto falta por recuperar.
 
-**Usuario:** un único tipo, el **prestamista** (persona natural, mayor de 20 años, que presta de forma habitual u ocasional). Los **deudores son datos** que él registra, no usuarios de la aplicación.
+**Alcance**
 
-**Necesidades que cubre:**
-1. Saber **quién debe, cuánto debe** y tener sus datos de contacto para cobrar a tiempo.
-2. Acceder fácil a la información y llevar mejor control del dinero (capital prestado y ganancia).
-
-## Funcionalidades
-
-| Nivel | Qué incluye |
+| | Qué incluye |
 |---|---|
-| **MVP** | Registro e inicio de sesión · deudores · préstamos · abonos · pantalla principal · estadística (lo que tengo prestado vs. lo que me deben) · historial |
-| **Extras** | Proveedores (entidades que aportan capital) · soportes del préstamo (pagaré, comprobante) · exportar reportes · alertas de vencimiento |
-| **Fuera de alcance** | Pagos reales · notificaciones por SMS o correo · app móvil nativa · varios tipos de usuario |
+| MVP | Registro e inicio de sesión, deudores, préstamos, abonos, pantalla principal, estadística e historial |
+| Extras | Proveedores (entidades que aportan capital), soportes del préstamo, exportar reportes, alertas de vencimiento |
+| Fuera de alcance | Pagos reales, notificaciones por SMS o correo, app móvil, varios tipos de usuario |
 
-## Stack tecnológico
+## Stack
 
 | Capa | Tecnología |
 |---|---|
-| **Frontend** | React + Vite (JavaScript, sin TypeScript) · ESLint |
-| **Backend** | Node.js + Express (ES Modules) · `pg` · `dotenv` |
-| **Base de datos** | PostgreSQL alojado en [Neon](https://neon.com) |
-| **Autenticación** | JWT + bcrypt |
-| **Despliegue (planeado)** | Frontend en Vercel o Netlify · Backend en Render · Base de datos en Neon |
-| **Despliegue temporal (opcional)** | AWS con Docker y CDK (`deploy` antes de la sustentación, `destroy` después) |
+| Frontend | React con Vite (JavaScript), React Router, ESLint |
+| Backend | Node.js y Express (ES Modules) |
+| Librerías del backend | `pg`, `dotenv`, `cors`, `bcrypt`, `jsonwebtoken` |
+| Base de datos | PostgreSQL en [Neon](https://neon.com) |
+| Despliegue previsto | Vercel o Netlify (frontend), Render (backend), Neon (base de datos) |
 
-## Arquitectura
+Para la sustentación se evalúa un despliegue temporal en AWS, pero primero se termina la app con el despliegue gratuito.
 
-Cliente-servidor con un **monolito por capas** y una **API REST**. Dos aplicaciones independientes que se comunican por HTTP:
-
-```mermaid
-flowchart LR
-    A["Frontend<br/>React + Vite"] -- "HTTP / JSON" --> B["API<br/>Node + Express"]
-    B -- "SQL (pg)" --> C[("PostgreSQL<br/>Neon")]
-```
-
-El backend se organizará en capas, cada una con una sola responsabilidad:
-
-```text
-Ruta  >  Middleware  >  Controlador  >  Servicio  >  Acceso a datos
-```
-
-| Capa | Responsabilidad |
-|---|---|
-| **Ruta** | Define las URL del API (`/api/prestamos`) |
-| **Middleware** | Verifica el JWT y valida los datos de entrada |
-| **Controlador** | Recibe la petición y arma la respuesta |
-| **Servicio** | Reglas de negocio (saldo, vencimientos, validación de abonos) |
-| **Acceso a datos** | Consultas SQL parametrizadas a PostgreSQL |
-
-## Estructura del proyecto
+## Estructura del repositorio
 
 ```text
 JAY-wallet/
-├── client/             # Frontend (React + Vite)
-│   ├── src/
-│   ├── public/
+├── client/              Frontend (React + Vite)
+│   ├── src/             App.jsx con las rutas; pantallas Login, Registro y Dashboard
 │   └── package.json
-├── server/             # Backend (Node + Express)
-│   ├── server.js
-│   ├── package.json
-│   └── .env.example
+├── server/              Backend (Node + Express)
+│   ├── server.js        Punto de entrada
+│   ├── db.js            Conexión a PostgreSQL (pg, con SSL)
+│   ├── routes/          Definen las URL y qué controlador atiende cada una
+│   ├── controllers/     Lógica de cada endpoint y consultas SQL
+│   ├── middleware/      Verificación del JWT
+│   ├── .env.example     Plantilla de variables de entorno
+│   └── package.json
 ├── .gitignore
-├── Objetives.md
 └── README.md
 ```
 
-> A medida que crezca el backend, `server/` se dividirá en `routes/`, `controllers/`, `services/`, `middleware/` y `db/`, siguiendo las capas descritas arriba.
+El backend va por capas: la ruta recibe la petición, el middleware revisa el token cuando la ruta es privada, y el controlador responde. Cuando haya reglas de negocio más pesadas (cálculo de saldos, vencimientos) se separarán en una capa de servicios.
 
-## Cómo empezar
+## Cómo correrlo en local
 
-### Requisitos
+Necesitas Node.js (versión LTS), Git y una base de datos PostgreSQL. Para desarrollo, lo más simple es crear tu propia base gratis en Neon y ejecutar el esquema (`schema.sql`) en su SQL Editor.
 
-- [Node.js](https://nodejs.org) (versión LTS) y npm
-- [Git](https://git-scm.com)
-- Una base de datos PostgreSQL. Para desarrollo, cada integrante crea la suya, gratis, en [Neon](https://neon.com) y ejecuta en el **SQL Editor** el archivo del esquema (ver [Base de datos](#base-de-datos)).
-
-### 1. Clonar el repositorio
-
-> Clónalo **fuera de OneDrive** (por ejemplo en `C:\dev`): sincronizar `node_modules` vuelve lento el equipo y puede dañar la carpeta `.git`.
+Clona el repo fuera de OneDrive, por ejemplo en `C:\dev`. OneDrive intenta sincronizar `node_modules` y termina bloqueando la carpeta `.git`.
 
 ```bash
 git clone https://github.com/yilmar1212/JAY-wallet.git
 cd JAY-wallet
 ```
 
-### 2. Instalar dependencias
+Instala las dependencias de las dos partes:
 
 ```bash
-# Frontend
-cd client
+cd server
 npm install
+cd ../client
+npm install
+```
 
-# Backend
+Crea el archivo de variables de entorno del servidor:
+
+```bash
 cd ../server
-npm install
+cp .env.example .env              # Linux, macOS o Git Bash
+Copy-Item .env.example .env       # PowerShell
 ```
 
-### 3. Configurar las variables de entorno
+Abre `.env` y completa los valores (tabla de abajo). El archivo tiene que llamarse exactamente `.env`; en Windows es fácil que quede como `.env.txt` o `.env.example` sin darse cuenta.
 
-En `server/`, copia el archivo de ejemplo:
-
-```bash
-# Linux / macOS / Git Bash
-cp .env.example .env
-
-# Windows (PowerShell)
-Copy-Item .env.example .env
-```
-
-Abre `.env` y completa los valores (ver la siguiente sección). **Nunca subas `.env` a GitHub.**
-
-### 4. Arrancar el proyecto
-
-Necesitas dos terminales:
+Arranca las dos partes, cada una en su terminal:
 
 ```bash
-# Terminal 1 · Backend  ->  http://localhost:3000
+# Backend: http://localhost:3000
 cd server
 npm run dev
-# Prueba: http://localhost:3000/api/health
-```
 
-```bash
-# Terminal 2 · Frontend  ->  http://localhost:5173
+# Frontend: http://localhost:5173
 cd client
 npm run dev
 ```
 
-## Variables de entorno
+Si todo salió bien, el backend imprime que quedó escuchando y que conectó con Neon, y `http://localhost:3000/api/health` responde.
 
-Definidas en `server/.env` (la plantilla es `server/.env.example`):
+### Variables de entorno
 
 | Variable | Descripción |
 |---|---|
-| `DATABASE_URL` | Cadena de conexión a PostgreSQL (Neon). Es una credencial: no se comparte por chat ni se sube al repo |
-| `JWT_SECRET` | Clave secreta para firmar los tokens de sesión. Usa un valor largo y aleatorio |
-| `PORT` | Puerto del servidor (por defecto `3000`) |
+| `PORT` | Puerto del servidor. Por defecto `3000` |
+| `DATABASE_URL` | Cadena de conexión de Neon. Es una credencial: no se sube a GitHub ni se pega en chats |
+| `JWT_SECRET` | Clave con la que se firman los tokens. Debe ser larga y aleatoria |
+
+Una forma de generar el `JWT_SECRET`:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
+
+## Autenticación
+
+Así funciona hoy el acceso a la aplicación:
+
+1. **Registro.** El backend valida que lleguen todos los campos y que el correo no exista. Luego cifra la contraseña con bcrypt y guarda el usuario en la tabla `usuarios`. La contraseña original nunca se guarda.
+2. **Login.** Busca el usuario por correo y compara la contraseña con el hash usando `bcrypt.compare`. Si coincide, firma un JWT con el id y el correo del usuario. El token vence a las 2 horas.
+3. **Sesión en el frontend.** El token se guarda en `localStorage` y se envía en las peticiones a rutas privadas. Cerrar sesión es borrarlo.
+4. **Rutas privadas en el backend.** El middleware revisa el token de cada petición. Sin token, o con uno inválido o vencido, responde 401.
+5. **Dashboard.** Si no hay token guardado, redirige al login. Ojo: esta revisión del frontend solo mejora la experiencia. La protección de verdad está en el backend, porque lo del navegador se puede saltar.
 
 ## Base de datos
 
-PostgreSQL en Neon. El esquema contiene estas tablas y una vista:
+Seis tablas y una vista, todas en PostgreSQL (Neon):
 
 | Tabla | Qué guarda |
 |---|---|
 | `usuarios` | Los prestamistas: nombre, correo y contraseña cifrada |
-| `deudores` | Personas a quienes se presta: nombre, documento, teléfono, dirección, correo |
-| `prestamos` | Monto, tasa de interés, fechas de inicio y vencimiento, estado |
-| `abonos` | Pagos parciales o totales de un préstamo |
-| `proveedores` | Entidades que aportan capital al prestamista |
-| `soportes` | Archivos que respaldan un préstamo (se guarda la URL) |
-| `v_prestamos_saldo` *(vista)* | Préstamos con total abonado, saldo pendiente y si están vencidos |
+| `deudores` | Nombre, documento, teléfono, dirección y correo de cada deudor |
+| `prestamos` | Monto, tasa de interés, fecha de inicio y de vencimiento, estado |
+| `abonos` | Pagos, parciales o totales, de un préstamo |
+| `proveedores` | Entidades que le prestan capital al prestamista |
+| `soportes` | Referencia a los archivos que respaldan un préstamo |
+| `v_prestamos_saldo` (vista) | Cada préstamo con el total abonado, el saldo pendiente y si está vencido |
 
-```mermaid
-erDiagram
-    usuarios ||--o{ deudores : tiene
-    usuarios ||--o{ prestamos : registra
-    usuarios ||--o{ proveedores : registra
-    deudores ||--o{ prestamos : "recibe (deudor)"
-    deudores ||--o{ prestamos : "respalda (codeudor)"
-    prestamos ||--o{ abonos : recibe
-    prestamos ||--o{ soportes : tiene
-```
+Algunas decisiones del diseño:
 
-**Decisiones de diseño**
+- El saldo pendiente y el estado "vencido" no se guardan, se calculan al consultar. Así, si se corrige un abono, el saldo se ajusta solo. El estado guardado es `activo`, `pagado` o `anulado`.
+- El dinero va en `NUMERIC(14,2)`. Con `float` se acumulan errores de redondeo.
+- El codeudor es otro registro de `deudores`.
+- Los deudores, préstamos y proveedores llevan `usuario_id`, y cada consulta filtra por el usuario autenticado para que nadie vea datos ajenos.
 
-- El **saldo pendiente** y el estado **«vencido»** se calculan al consultar, no se guardan. Así se corrigen solos si se registra un abono por error. El estado guardado es solo `activo`, `pagado` o `anulado`.
-- El dinero se guarda como `NUMERIC(14,2)`, nunca como `float`, para evitar errores de redondeo.
-- El **codeudor** es otro registro de `deudores`.
-- Todo dato tiene dueño (`usuario_id`): cada consulta filtra por el usuario autenticado.
+Falta definir si la tasa de interés es mensual o anual, y si el interés es simple o compuesto.
 
-**Pendiente por definir:** si la tasa de interés es mensual o anual, y si el interés es simple o compuesto.
+## API
 
-> El archivo `schema.sql` con el esquema completo debe vivir en `server/db/`. Si aún no está en el repo, está en la lista de tareas pendientes.
+Lo que existe hoy y lo que viene. Las rutas pendientes son una propuesta y pueden cambiar.
 
-## API (planificada)
+| Ruta | Descripción | Estado |
+|---|---|---|
+| `GET /api/health` | Comprueba que el servidor responde | Hecho |
+| `POST /api/auth/registro` | Crea un usuario | Hecho |
+| `POST /api/auth/login` | Inicia sesión y devuelve el token | Hecho |
+| `GET /api/prueba` | Ruta protegida para probar el middleware (se quitará) | Hecho |
+| `GET` y `POST /api/deudores` | Listar y crear deudores | En curso |
+| `GET`, `PUT` y `DELETE /api/deudores/:id` | Ver, editar y borrar un deudor | En curso |
+| `GET` y `POST /api/prestamos` | Listar y crear préstamos | Pendiente |
+| `GET /api/prestamos/:id` | Detalle con saldo y abonos | Pendiente |
+| `POST /api/prestamos/:id/abonos` | Registrar un abono | Pendiente |
+| `GET /api/estadisticas` | Totales prestado y por cobrar | Pendiente |
+| `GET` y `POST /api/proveedores` | Proveedores | Pendiente |
 
-| Método y ruta | Qué hace |
-|---|---|
-| `GET /api/health` | Comprueba que el servidor está vivo *(ya disponible)* |
-| `POST /api/auth/registro` | Crea un usuario |
-| `POST /api/auth/login` | Inicia sesión y devuelve el JWT |
-| `GET` · `POST /api/deudores` | Lista o crea deudores |
-| `GET` · `PUT /api/deudores/:id` | Ver o editar un deudor |
-| `GET` · `POST /api/prestamos` | Lista (con filtros) o crea préstamos |
-| `GET /api/prestamos/:id` | Detalle con saldo pendiente y abonos |
-| `POST /api/prestamos/:id/abonos` | Registra un abono |
-| `GET /api/estadisticas` | Totales: lo prestado vs. lo que me deben |
-| `GET` · `POST /api/proveedores` | Lista o crea proveedores *(extra)* |
+## Cómo trabajamos
 
-## Flujo de trabajo en Git
-
-Flujo simple: una rama estable (`main`) y ramas por tarea (`feature/...`).
+Hay una sola rama estable, `main`, y una rama por tarea.
 
 ```bash
-# 1. Parte de main actualizado
 git checkout main
 git pull origin main
+git checkout -b feature/nombre-de-la-tarea
 
-# 2. Crea tu rama
-git checkout -b feature/nombre-de-tu-tarea
-
-# 3. Trabaja y guarda en commits pequeños
+# trabajar, y guardar en commits pequeños
 git add .
 git commit -m "feat: descripción de lo que hiciste"
-
-# 4. Sube la rama
-git push -u origin feature/nombre-de-tu-tarea
+git push -u origin feature/nombre-de-la-tarea
 ```
 
-5. Abre un **Pull Request** hacia `main` y pide revisión a otro integrante.
-6. Úne el PR con **Squash and merge** y borra la rama.
+Después se abre un Pull Request hacia `main`, otro integrante lo revisa y se une con Squash and merge. La rama se borra al terminar.
 
-**Acuerdos del equipo**
+Acuerdos:
 
-- Nadie trabaja directo en `main`: todo entra por Pull Request.
-- Una rama por tarea, de vida corta (uno o dos días).
-- Otro integrante revisa antes de unir.
-- Se hace `git pull` en `main` antes de empezar cada tarea.
+- Nadie sube directo a `main`.
+- Cada rama es de una sola tarea y dura uno o dos días.
+- Los mensajes de commit empiezan con `feat:`, `fix:`, `docs:`, `refactor:` o `chore:`.
+- Antes de `git add .` se revisa `git status`, para no subir el `.env` ni `node_modules`.
 
-**Mensajes de commit**
-
-| Prefijo | Cuándo |
-|---|---|
-| `feat:` | Algo nuevo que funciona |
-| `fix:` | Arreglo de un error |
-| `docs:` | Documentación |
-| `refactor:` | Reorganizar sin cambiar el comportamiento |
-| `chore:` | Configuración y dependencias |
-
-Las tareas se gestionan en el tablero de **Notion** del equipo, organizadas en sprints de una semana.
+Las tareas están en un tablero de Notion, organizadas en sprints de una semana.
 
 ## Seguridad
 
-Este repositorio es **público**: cualquiera puede ver el código y el historial completo.
+El repositorio es público, así que cualquiera puede ver el código y todo el historial.
 
-- Contraseñas, claves y cadenas de conexión viven **solo** en `server/.env`, que está en `.gitignore`.
-- Si se sube un secreto por error, **borrar el commit no basta**: hay que cambiar esa clave de inmediato.
-- Las contraseñas de usuario se guardan con **bcrypt**; nunca en texto plano.
-- Las consultas SQL usan **parámetros**, nunca texto concatenado.
-- Todo se valida también en el servidor, y las rutas privadas exigen un JWT válido.
-- Solo se usan **datos ficticios** en pruebas, capturas y demos.
+- Las credenciales van solo en `server/.env`, que está en el `.gitignore`.
+- Si un secreto llega a subirse, borrar el commit no sirve: hay que cambiar la clave de inmediato.
+- Las consultas SQL usan parámetros, nunca texto concatenado.
+- En pruebas, capturas y demos se usan datos inventados, no de personas reales.
 
-## Estado del proyecto
+## Avance
 
-**Preparación (Sprint 0)**
+**Sprint 0: preparación**
 - [x] Arquitectura de la información y wireframes
-- [x] Diseño de la base de datos ejecutado en Neon
-- [x] Repositorio creado (flujo con `main` y ramas `feature/...`)
-- [x] Estructura inicial de carpetas (`client/` y `server/`)
-- [x] Backend con Express y endpoint de prueba `/api/health`
-- [ ] Agregar `schema.sql` al repo (`server/db/`)
-- [ ] Conectar Express a Neon con `.env` y verificar la conexión
+- [x] Diseño de la base de datos y esquema ejecutado en Neon
+- [x] Repositorio, flujo de ramas y limpieza de ramas de prueba
+- [x] Estructura `client/` y `server/`
+- [x] Servidor Express con `/api/health`
+- [x] Conexión a Neon con variables de entorno
+- [ ] Subir el esquema SQL al repositorio
 
-**Siguientes sprints**
-- [ ] **Sprint 1:** login, registro y deudores
-- [ ] **Sprint 2:** préstamos y abonos
-- [ ] **Sprint 3:** pantalla principal, estadística e historial *(fin del MVP)*
-- [ ] **Sprint 4:** proveedores, soportes, validaciones, datos de prueba y sustentación
+**Sprint 1: acceso y deudores**
+- [x] Registro de usuarios con contraseña cifrada
+- [x] Login con JWT
+- [x] Middleware de autenticación
+- [x] Pantallas de login, registro y dashboard con rutas protegidas
+- [ ] CRUD de deudores (backend y pantallas)
+
+**Sprint 2: préstamos y abonos**
+- [ ] Préstamos, abonos y cálculo del saldo
+- [ ] Búsqueda y filtros
+
+**Sprint 3: panorama general** (aquí termina el MVP)
+- [ ] Pantalla principal, estadística e historial
+
+**Sprint 4: cierre**
+- [ ] Proveedores y soportes
+- [ ] Validaciones, datos de prueba y sustentación
 
 ## Equipo
 
 | Nombre | GitHub |
 |---|---|
 | Yilmar | [@yilmar1212](https://github.com/yilmar1212) |
-| *(completar)* | *(completar)* |
-| *(completar)* | *(completar)* |
-
----
+| (completar) | (completar) |
+| (completar) | (completar) |
 
 Proyecto académico con fines educativos.
