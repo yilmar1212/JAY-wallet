@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { probarBaseDeDatos } from '../controllers/pruebaController.js';
+import { verificarToken } from '../middleware/authMiddleware.js'; // <-- NUEVO
 
 const router = Router();
 
-// Definimos la ruta GET /api/prueba
-router.get('/', probarBaseDeDatos);
+// Le decimos: "Antes de ejecutar probarBaseDeDatos, ejecuta verificarToken"
+router.get('/', verificarToken, probarBaseDeDatos); 
 
 export default router;
