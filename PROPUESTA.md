@@ -5,9 +5,7 @@
 **Docente:** Luz Carime Lucumí Hernández
 
 ## 1. Integrantes del equipo
-*   [Nombre de tu compañero 1]
-*   [Nombre de tu compañero 2]
-*   Yilmar Mauricio [Tu apellido]
+*   Yilmar Mauricio Riascos Moreno
 
 ---
 
