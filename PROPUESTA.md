@@ -1,12 +1,15 @@
 # Propuesta de Proyecto: JAY-wallet
 
 **Universidad del Valle – 2026-2**
-**Curso:** Proyecto Integrador I (40%)
-**Docente:** Luz Carime Lucumí Hernández
+**Curso:** Proyecto Integrador I y Desarrollo de software II 
+**Docentes:** Luz Carime Lucumí Hernández y Pinillos
 
 ## 1. Integrantes del equipo
-*   Yilmar Mauricio [Tu apellido]
-*   hay otros compañeros, pero estan en el otro grupo
+*   Alejandra 
+*   Juan Esteban Perez Ramirez 
+*   Yilmar Mauricio Riascos Moreno
+
+*Nota aclaratoria:* Aunque el equipo de trabajo está conformado por los tres integrantes mencionados, la presentación y sustentación del proyecto en la asignatura de Desarrollo II será realizada por: **[Escribe aquí tu nombre y el de quien(es) presentarán]**.
 
 ---
 
@@ -45,7 +48,8 @@ Para garantizar la integridad del dinero, el sistema aplicará las siguientes re
 *   *Ejemplo:* Si un préstamo es de $100.000 y el deudor ha abonado $30.000 (saldo pendiente: $70.000), el sistema **rechazará** un intento de registrar un abono de $80.000, mostrando el mensaje: *"El abono excede el saldo pendiente actual"*. Si intenta abonar $70.000, se acepta y el préstamo pasa a estado "Pagado".
 
 **Regla 2: La fecha de vencimiento debe ser estrictamente posterior a la fecha de inicio.**
-*   *Ejemplo:* Si el prestamista intenta crear un préstamo hoy (12 de noviembre) con fecha de vencimiento el 10 de noviembre, el sistema **rechazará** la acción y mostrará el mensaje: *"La fecha de vencimiento no puede ser anterior a la fecha de inicio"*.
+*   *Ejemplo:* Si el prestamista intenta crear un préstamo con fecha de inicio hoy (12 de noviembre) y fecha de vencimiento el 10 de noviembre, el sistema **rechazará** la acción con el mensaje: *"La fecha de vencimiento no puede ser anterior a la fecha de inicio"*.
+*   *Caso límite (fechas iguales):* Si el prestamista intenta crear un préstamo donde la fecha de inicio y la fecha de vencimiento son el mismo día (ej. 12 de noviembre para ambas), el sistema también **rechazará** la acción, mostrando el mensaje específico: *"La fecha de vencimiento debe ser posterior a la fecha de inicio, no pueden ser el mismo día"*.
 
 ---
 
