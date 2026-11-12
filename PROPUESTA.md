@@ -68,3 +68,4 @@ Para la primera entrega funcional, el equipo se enfocará en:
 1.  *Manejo del tiempo y vencimientos:* PostgreSQL guarda fechas, pero ¿cómo manejar las zonas horarias para calcular si un préstamo está "vencido"?
 2.  *Precisión del dinero:* Para evitar errores de redondeo, el dinero se maneja en la base de datos con tipo `NUMERIC(14,2)`, no con decimales flotantes.
 3.  *Despliegue:* Evaluaremos la mejor forma gratuita de desplegar el frontend (Vercel/Netlify) y el backend (Render) para la fase final.
+
